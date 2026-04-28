@@ -75,6 +75,17 @@ Happy learning! 🌈
 
 ---
 
+## Visual assets to upload (Main store listing → Graphics)
+
+| Asset | File to upload | Specs |
+|---|---|---|
+| **App icon** | `store/play-store-icon.png` | 512×512 PNG |
+| **Feature graphic** | `store/feature-graphic.png` | 1024×500 PNG |
+| **Phone screenshots** (2–8 required) | all 4 files in `screenshots/` | 1080×1920 PNG, drag-and-drop them in |
+| **Tablet screenshots** | *(skip — optional)* | — |
+
+---
+
 ## Other Play Console fields (quick reference)
 
 | Field | Suggested value |
