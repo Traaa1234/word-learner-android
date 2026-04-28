@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#a78bfa" />
+  <title>Word Learner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: linear-gradient(135deg,
+        #ffd6e7 0%, #ffecb3 20%, #d4f1c0 40%,
+        #c9e8ff 60%, #e8d5ff 80%, #ffd6e7 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: max(20px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom));
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .bubble-container {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.35;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(110vh) scale(0.8); opacity: 0.35; }
+      100% { transform: translateY(-20vh)  scale(1.2); opacity: 0;    }
+    }
+
+    .app {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 720px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+
+    .title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.9rem, 6.5vw, 3rem);
+      color: #7c3aed;
+      text-shadow: 3px 3px 0 #fbbf24, 5px 5px 0 #f472b6;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+    .star-counter {
+      background: #fffde7;
+      border: 3px solid #fbbf24;
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #b45309;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 3px 10px #fbbf2440;
+    }
+    .mascot {
+      font-size: 2.6rem;
+      transition: transform 0.3s;
+      user-select: none;
+      filter: drop-shadow(2px 4px 6px #0002);
+    }
+    .mascot.happy  { animation: bounce 0.5s ease; }
+    .mascot.sad    { animation: wobble 0.5s ease; }
+    @keyframes bounce {
+      0%,100%{ transform: translateY(0) scale(1); }
+      40%    { transform: translateY(-18px) scale(1.15); }
+      70%    { transform: translateY(-8px) scale(1.05); }
+    }
+    @keyframes wobble {
+      0%,100%{ transform: rotate(0deg); }
+      25%    { transform: rotate(-10deg); }
+      75%    { transform: rotate(10deg); }
+    }
+
+    .progress-wrap {
+      width: 100%;
+      background: #ffffff80;
+      border-radius: 999px;
+      height: 16px;
+      border: 2px solid #e9d5ff;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px #0001;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #a78bfa, #f472b6, #fb923c);
+      border-radius: 999px;
+      transition: width 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 60%, #ffffff50);
+      animation: shimmer 2s linear infinite;
+    }
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(200%); }
+    }
+    .progress-label {
+      font-size: 0.85rem; font-weight: 700;
+      color: #6d28d9; text-align: center; margin-top: 4px;
+    }
+
+    .controls-row {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .voice-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: #ffffffcc;
+      border: 2px solid #e9d5ff;
+      border-radius: 999px;
+      padding: 4px 10px 4px 14px;
+      box-shadow: 0 3px 0 #0001;
+    }
+    .voice-wrap label {
+      font-weight: 800; font-size: 0.9rem; color: #6d28d9;
+      user-select: none;
+    }
+    .voice-select {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700; font-size: 0.9rem;
+      border: none; outline: none;
+      background: transparent;
+      color: #4b5563;
+      cursor: pointer;
+      max-width: 220px;
+      padding: 6px 4px;
+    }
+
+    .filter-row {
+      width: 100%;
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+      padding: 4px;
+    }
+    .pill {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.78rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: #ffffffcc;
+      color: #4b5563;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.2s, color 0.2s;
+      box-shadow: 0 2px 0 #0001;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .pill:hover { transform: translateY(-1px); }
+    .pill.active {
+      color: #fff;
+      box-shadow: 0 3px 0 #0002, 0 4px 12px #0002;
+    }
+
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      border: none; cursor: pointer;
+      border-radius: 999px;
+      padding: 11px 22px;
+      transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+      box-shadow: 0 5px 0 #0002, 0 8px 20px #0001;
+      position: relative; user-select: none;
+    }
+    .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0002; }
+    .btn:hover  { filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 8px 0 #0002, 0 12px 24px #0001; }
+
+    .btn-purple { background: linear-gradient(135deg,#a78bfa,#7c3aed); color:#fff; }
+    .btn-pink   { background: linear-gradient(135deg,#f9a8d4,#ec4899); color:#fff; }
+    .btn-green  { background: linear-gradient(135deg,#6ee7b7,#059669); color:#fff; }
+    .btn-orange { background: linear-gradient(135deg,#fcd34d,#f97316); color:#fff; }
+    .btn-blue   { background: linear-gradient(135deg,#93c5fd,#3b82f6); color:#fff; }
+    .btn-gray   { background: linear-gradient(135deg,#e5e7eb,#9ca3af); color:#374151; }
+
+    .card {
+      width: 100%;
+      background: #ffffffcc;
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 32px 28px 28px;
+      box-shadow:
+        0 8px 32px #a78bfa30,
+        0 2px 8px #0001,
+        inset 0 1px 0 #fff8;
+      border: 4px solid #e9d5ff;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      min-height: 320px; justify-content: center;
+      transition: border-color 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fbbf2430, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cat-badge {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      color: #fff;
+      box-shadow: 0 3px 8px #0002;
+    }
+
+    .word-number {
+      font-size: 0.9rem; font-weight: 700;
+      color: #9ca3af; letter-spacing: 1px;
+    }
+
+    .word-display {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.6rem, 11vw, 4.8rem);
+      letter-spacing: 3px;
+      text-align: center;
+      line-height: 1;
+      background: linear-gradient(135deg, #7c3aed, #ec4899, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(2px 4px 0 #fbbf2440);
+    }
+
+    .pron-block {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      animation: popIn 0.3s ease;
+    }
+    .pron-respell {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 3.4vw, 1.5rem);
+      color: #6d28d9;
+      letter-spacing: 1px;
+    }
+    .pron-ipa {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: clamp(0.85rem, 2.4vw, 1.05rem);
+      color: #9ca3af;
+      letter-spacing: 0.5px;
+    }
+
+    .speak-btn {
+      font-size: 1.6rem;
+      background: #fffde7;
+      border: 3px solid #fbbf24;
+      border-radius: 50%;
+      width: 52px; height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+      box-shadow: 0 4px 0 #b4530940, 0 6px 14px #fbbf2440;
+      user-select: none;
+    }
+    .speak-btn:hover { transform: translateY(-2px) rotate(-5deg); background: #fef3c7; }
+    .speak-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b4530940; }
+    .speak-btn.speaking { animation: pulse 0.6s ease infinite; background: #fef3c7; }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.12); }
+    }
+
+    .fitb-display {
+      display: flex; flex-wrap: wrap;
+      justify-content: center; align-items: center;
+      gap: 6px;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.8rem, 8vw, 3.6rem);
+      letter-spacing: 4px;
+    }
+    .fitb-letter {
+      color: #7c3aed;
+      min-width: 0.7em;
+      text-align: center;
+      line-height: 1;
+    }
+    .fitb-input {
+      width: 1.2em; height: 1.3em;
+      font-family: 'Fredoka One', cursive;
+      font-size: inherit;
+      text-align: center;
+      border: none; border-bottom: 4px solid #a78bfa;
+      background: #f3e8ff;
+      border-radius: 10px 10px 4px 4px;
+      color: #7c3aed;
+      outline: none;
+      padding: 0 2px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .fitb-input:focus { border-color: #f472b6; background: #fce7f3; }
+    .fitb-input.correct { background: #d1fae5; border-color: #10b981; }
+    .fitb-input.wrong   { background: #fee2e2; border-color: #ef4444; }
+
+    .feedback {
+      font-size: 2rem; font-weight: 800;
+      min-height: 2.5rem;
+      display: flex; align-items: center; gap: 10px;
+      justify-content: center;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .feedback.correct { color: #059669; }
+    .feedback.wrong   { color: #dc2626; }
+
+    .nav-row {
+      display: flex; gap: 14px; justify-content: center;
+      flex-wrap: wrap; width: 100%;
+    }
+
+    .star-burst {
+      position: fixed; pointer-events: none;
+      font-size: 2rem; z-index: 999;
+      animation: starFloat 1.2s ease-out forwards;
+    }
+    @keyframes starFloat {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-120px) scale(0.4); opacity: 0; }
+    }
+
+    .hint {
+      font-size: 0.9rem; color: #9ca3af; font-weight: 600;
+      text-align: center; min-height: 1.2em;
+    }
+
+    .empty {
+      font-size: 1.1rem; color: #6b7280; font-weight: 700; text-align: center;
+    }
+
+    @media (max-width: 420px) {
+      .btn { font-size: 0.9rem; padding: 10px 16px; }
+      .card { padding: 24px 14px 22px; }
+      .pill { font-size: 0.72rem; padding: 5px 9px; }
+      .voice-select { max-width: 140px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bubble-container" id="bubbleContainer"></div>
+
+<div class="app">
+  <h1 class="title">⭐ Word Learner 🌈</h1>
+
+  <div class="top-bar">
+    <div class="star-counter">⭐ <span id="starCount">0</span> stars</div>
+    <div class="mascot" id="mascot">🦊</div>
+  </div>
+
+  <div style="width:100%">
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:1%"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">Word 1 of 200</div>
+  </div>
+
+  <div class="controls-row">
+    <button class="btn btn-purple" id="modeBtn" onclick="toggleMode()">Switch to Fill-in-the-Blank 🖊️</button>
+    <button class="btn btn-orange" onclick="shuffleWords()">Shuffle 🔀</button>
+    <div class="voice-wrap">
+      <label for="voiceSelect">🎙️ Voice:</label>
+      <select class="voice-select" id="voiceSelect" onchange="onVoiceChange()">
+        <option>Loading…</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="filter-row" id="filterRow"></div>
+
+  <div class="card" id="card">
+    <div id="flashcardView" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+      <div class="word-number" id="wordNumber">Word 1 of 200</div>
+      <div class="cat-badge" id="catBadge">Determiner</div>
+      <div class="word-display" id="wordDisplay">the</div>
+      <button class="speak-btn" id="speakBtn" onclick="speakWord()" title="Hear it">🔊</button>
+      <div class="hint" id="flashStatus" style="min-height:1.2em; font-size:0.8rem;"></div>
+      <div class="pron-block">
+        <div class="pron-respell" id="pronRespell">thuh</div>
+        <div class="pron-ipa" id="pronIpa">/ðə/</div>
+      </div>
+    </div>
+
+    <div id="fitbView" style="display:none; flex-direction:column; align-items:center; gap:16px;">
+      <div class="word-number" id="fitbWordNumber">Word 1 of 200</div>
+      <div class="cat-badge" id="fitbCatBadge">Determiner</div>
+      <div class="fitb-display" id="fitbDisplay"></div>
+      <button class="speak-btn" id="fitbSpeakBtn" onclick="speakWord()" title="Hear it">🔊</button>
+      <div class="feedback" id="feedback"></div>
+      <div class="pron-block" id="fitbPron" style="visibility:hidden;">
+        <div class="pron-respell" id="fitbPronRespell">thuh</div>
+        <div class="pron-ipa" id="fitbPronIpa">/ðə/</div>
+      </div>
+      <div class="hint" id="hint">Type the missing letters, then tap Check!</div>
+    </div>
+  </div>
+
+  <div class="nav-row" id="navRow">
+    <button class="btn btn-gray"  onclick="prevWord()">◀ Previous</button>
+    <button class="btn btn-green" onclick="nextWord()">Next ▶</button>
+  </div>
+  <div class="nav-row" id="fitbNav" style="display:none;">
+    <button class="btn btn-pink" id="checkBtn" onclick="checkAnswer()">Check ✅</button>
+  </div>
+</div>
+
+<script>
+/* ── Category metadata ────────────────────────────────────────────── */
+const CATEGORIES = {
+  det:  { label: 'Determiner',  color: '#f59e0b' },
+  pro:  { label: 'Pronoun',     color: '#f43f5e' },
+  prep: { label: 'Preposition', color: '#0ea5e9' },
+  conj: { label: 'Conjunction', color: '#8b5cf6' },
+  aux:  { label: 'Auxiliary',   color: '#14b8a6' },
+  adv:  { label: 'Adverb',      color: '#84cc16' },
+  verb: { label: 'Verb',        color: '#10b981' },
+  noun: { label: 'Noun',        color: '#3b82f6' },
+  adj:  { label: 'Adjective',   color: '#ec4899' },
+};
+
+/* ── Word list (top 200, with category, respelling, IPA) ─────────── */
+const ORIGINAL_WORDS = [
+  { w: "the",        c: "det",  r: "thuh",        i: "/ðə/" },
+  { w: "be",         c: "aux",  r: "bee",         i: "/biː/" },
+  { w: "to",         c: "prep", r: "too",         i: "/tuː/" },
+  { w: "of",         c: "prep", r: "uhv",         i: "/əv/" },
+  { w: "and",        c: "conj", r: "and",         i: "/ænd/" },
+  { w: "a",          c: "det",  r: "uh",          i: "/ə/" },
+  { w: "in",         c: "prep", r: "in",          i: "/ɪn/" },
+  { w: "that",       c: "det",  r: "that",        i: "/ðæt/" },
+  { w: "have",       c: "aux",  r: "hav",         i: "/hæv/" },
+  { w: "it",         c: "pro",  r: "it",          i: "/ɪt/" },
+  { w: "for",        c: "prep", r: "for",         i: "/fɔr/" },
+  { w: "not",        c: "adv",  r: "not",         i: "/nɒt/" },
+  { w: "on",         c: "prep", r: "on",          i: "/ɒn/" },
+  { w: "with",       c: "prep", r: "with",        i: "/wɪð/" },
+  { w: "he",         c: "pro",  r: "hee",         i: "/hiː/" },
+  { w: "as",         c: "conj", r: "az",          i: "/æz/" },
+  { w: "you",        c: "pro",  r: "yoo",         i: "/juː/" },
+  { w: "do",         c: "aux",  r: "doo",         i: "/duː/" },
+  { w: "at",         c: "prep", r: "at",          i: "/æt/" },
+  { w: "this",       c: "det",  r: "this",        i: "/ðɪs/" },
+  { w: "but",        c: "conj", r: "but",         i: "/bʌt/" },
+  { w: "his",        c: "pro",  r: "hiz",         i: "/hɪz/" },
+  { w: "by",         c: "prep", r: "by",          i: "/baɪ/" },
+  { w: "from",       c: "prep", r: "fruhm",       i: "/frʌm/" },
+  { w: "they",       c: "pro",  r: "they",        i: "/ðeɪ/" },
+  { w: "we",         c: "pro",  r: "wee",         i: "/wiː/" },
+  { w: "say",        c: "verb", r: "say",         i: "/seɪ/" },
+  { w: "her",        c: "pro",  r: "hur",         i: "/hɜr/" },
+  { w: "she",        c: "pro",  r: "shee",        i: "/ʃiː/" },
+  { w: "or",         c: "conj", r: "or",          i: "/ɔr/" },
+  { w: "an",         c: "det",  r: "an",          i: "/æn/" },
+  { w: "will",       c: "aux",  r: "wil",         i: "/wɪl/" },
+  { w: "my",         c: "pro",  r: "my",          i: "/maɪ/" },
+  { w: "one",        c: "det",  r: "wuhn",        i: "/wʌn/" },
+  { w: "all",        c: "det",  r: "awl",         i: "/ɔl/" },
+  { w: "would",      c: "aux",  r: "wood",        i: "/wʊd/" },
+  { w: "there",      c: "adv",  r: "thair",       i: "/ðɛr/" },
+  { w: "their",      c: "pro",  r: "thair",       i: "/ðɛr/" },
+  { w: "what",       c: "pro",  r: "wuht",        i: "/wʌt/" },
+  { w: "so",         c: "adv",  r: "soh",         i: "/soʊ/" },
+  { w: "up",         c: "adv",  r: "up",          i: "/ʌp/" },
+  { w: "out",        c: "adv",  r: "owt",         i: "/aʊt/" },
+  { w: "if",         c: "conj", r: "if",          i: "/ɪf/" },
+  { w: "about",      c: "prep", r: "uh-BOWT",     i: "/əˈbaʊt/" },
+  { w: "who",        c: "pro",  r: "hoo",         i: "/huː/" },
+  { w: "get",        c: "verb", r: "get",         i: "/gɛt/" },
+  { w: "which",      c: "pro",  r: "wich",        i: "/wɪtʃ/" },
+  { w: "go",         c: "verb", r: "goh",         i: "/goʊ/" },
+  { w: "me",         c: "pro",  r: "mee",         i: "/miː/" },
+  { w: "when",       c: "adv",  r: "wen",         i: "/wɛn/" },
+  { w: "make",       c: "verb", r: "mayk",        i: "/meɪk/" },
+  { w: "can",        c: "aux",  r: "kan",         i: "/kæn/" },
+  { w: "like",       c: "prep", r: "lyk",         i: "/laɪk/" },
+  { w: "time",       c: "noun", r: "tym",         i: "/taɪm/" },
+  { w: "no",         c: "det",  r: "noh",         i: "/noʊ/" },
+  { w: "just",       c: "adv",  r: "juhst",       i: "/dʒʌst/" },
+  { w: "him",        c: "pro",  r: "him",         i: "/hɪm/" },
+  { w: "know",       c: "verb", r: "noh",         i: "/noʊ/" },
+  { w: "take",       c: "verb", r: "tayk",        i: "/teɪk/" },
+  { w: "people",     c: "noun", r: "PEE-puhl",    i: "/ˈpiːpəl/" },
+  { w: "into",       c: "prep", r: "IN-too",      i: "/ˈɪntuː/" },
+  { w: "year",       c: "noun", r: "yeer",        i: "/jɪər/" },
+  { w: "your",       c: "pro",  r: "yor",         i: "/jɔr/" },
+  { w: "good",       c: "adj",  r: "good",        i: "/gʊd/" },
+  { w: "some",       c: "det",  r: "suhm",        i: "/sʌm/" },
+  { w: "could",      c: "aux",  r: "kood",        i: "/kʊd/" },
+  { w: "them",       c: "pro",  r: "them",        i: "/ðɛm/" },
+  { w: "see",        c: "verb", r: "see",         i: "/siː/" },
+  { w: "other",      c: "adj",  r: "UHTH-er",     i: "/ˈʌðər/" },
+  { w: "than",       c: "conj", r: "than",        i: "/ðæn/" },
+  { w: "then",       c: "adv",  r: "then",        i: "/ðɛn/" },
+  { w: "now",        c: "adv",  r: "now",         i: "/naʊ/" },
+  { w: "look",       c: "verb", r: "look",        i: "/lʊk/" },
+  { w: "only",       c: "adv",  r: "OHN-lee",     i: "/ˈoʊnli/" },
+  { w: "come",       c: "verb", r: "kuhm",        i: "/kʌm/" },
+  { w: "its",        c: "pro",  r: "its",         i: "/ɪts/" },
+  { w: "over",       c: "prep", r: "OH-ver",      i: "/ˈoʊvər/" },
+  { w: "think",      c: "verb", r: "think",       i: "/θɪŋk/" },
+  { w: "also",       c: "adv",  r: "AWL-soh",     i: "/ˈɔlsoʊ/" },
+  { w: "back",       c: "adv",  r: "bak",         i: "/bæk/" },
+  { w: "after",      c: "prep", r: "AF-ter",      i: "/ˈæftər/" },
+  { w: "use",        c: "verb", r: "yooz",        i: "/juːz/" },
+  { w: "two",        c: "det",  r: "too",         i: "/tuː/" },
+  { w: "how",        c: "adv",  r: "how",         i: "/haʊ/" },
+  { w: "our",        c: "pro",  r: "owr",         i: "/aʊər/" },
+  { w: "work",       c: "verb", r: "wurk",        i: "/wɜrk/" },
+  { w: "first",      c: "adj",  r: "furst",       i: "/fɜrst/" },
+  { w: "well",       c: "adv",  r: "wel",         i: "/wɛl/" },
+  { w: "way",        c: "noun", r: "way",         i: "/weɪ/" },
+  { w: "even",       c: "adv",  r: "EE-vuhn",     i: "/ˈiːvən/" },
+  { w: "new",        c: "adj",  r: "noo",         i: "/nuː/" },
+  { w: "want",       c: "verb", r: "wahnt",       i: "/wɒnt/" },
+  { w: "because",    c: "conj", r: "bih-KAWZ",    i: "/bɪˈkɔz/" },
+  { w: "any",        c: "det",  r: "EN-ee",       i: "/ˈɛni/" },
+  { w: "these",      c: "det",  r: "theez",       i: "/ðiːz/" },
+  { w: "give",       c: "verb", r: "giv",         i: "/gɪv/" },
+  { w: "day",        c: "noun", r: "day",         i: "/deɪ/" },
+  { w: "most",       c: "det",  r: "mohst",       i: "/moʊst/" },
+  { w: "us",         c: "pro",  r: "us",          i: "/ʌs/" },
+  { w: "is",         c: "aux",  r: "iz",          i: "/ɪz/" },
+  { w: "was",        c: "aux",  r: "wuhz",        i: "/wʌz/" },
+  { w: "are",        c: "aux",  r: "ar",          i: "/ɑr/" },
+  { w: "been",       c: "aux",  r: "bin",         i: "/bɪn/" },
+  { w: "has",        c: "aux",  r: "haz",         i: "/hæz/" },
+  { w: "had",        c: "aux",  r: "had",         i: "/hæd/" },
+  { w: "were",       c: "aux",  r: "wur",         i: "/wɜr/" },
+  { w: "said",       c: "verb", r: "sed",         i: "/sɛd/" },
+  { w: "each",       c: "det",  r: "eech",        i: "/iːtʃ/" },
+  { w: "world",      c: "noun", r: "wurld",       i: "/wɜrld/" },
+  { w: "great",      c: "adj",  r: "grayt",       i: "/greɪt/" },
+  { w: "little",     c: "adj",  r: "LIT-uhl",     i: "/ˈlɪtəl/" },
+  { w: "own",        c: "adj",  r: "ohn",         i: "/oʊn/" },
+  { w: "old",        c: "adj",  r: "ohld",        i: "/oʊld/" },
+  { w: "life",       c: "noun", r: "lyf",         i: "/laɪf/" },
+  { w: "right",      c: "adj",  r: "ryt",         i: "/raɪt/" },
+  { w: "big",        c: "adj",  r: "big",         i: "/bɪg/" },
+  { w: "high",       c: "adj",  r: "hy",          i: "/haɪ/" },
+  { w: "different",  c: "adj",  r: "DIF-er-uhnt", i: "/ˈdɪfərənt/" },
+  { w: "small",      c: "adj",  r: "smawl",       i: "/smɔl/" },
+  { w: "large",      c: "adj",  r: "larj",        i: "/lɑrdʒ/" },
+  { w: "next",       c: "adj",  r: "nekst",       i: "/nɛkst/" },
+  { w: "early",      c: "adj",  r: "UR-lee",      i: "/ˈɜrli/" },
+  { w: "young",      c: "adj",  r: "yuhng",       i: "/jʌŋ/" },
+  { w: "important",  c: "adj",  r: "im-POR-tuhnt",i: "/ɪmˈpɔrtənt/" },
+  { w: "find",       c: "verb", r: "fynd",        i: "/faɪnd/" },
+  { w: "tell",       c: "verb", r: "tel",         i: "/tɛl/" },
+  { w: "ask",        c: "verb", r: "ask",         i: "/æsk/" },
+  { w: "seem",       c: "verb", r: "seem",        i: "/siːm/" },
+  { w: "feel",       c: "verb", r: "feel",        i: "/fiːl/" },
+  { w: "try",        c: "verb", r: "try",         i: "/traɪ/" },
+  { w: "leave",      c: "verb", r: "leev",        i: "/liːv/" },
+  { w: "call",       c: "verb", r: "kawl",        i: "/kɔl/" },
+  { w: "need",       c: "verb", r: "need",        i: "/niːd/" },
+  { w: "become",     c: "verb", r: "bih-KUHM",    i: "/bɪˈkʌm/" },
+  { w: "put",        c: "verb", r: "put",         i: "/pʊt/" },
+  { w: "mean",       c: "verb", r: "meen",        i: "/miːn/" },
+  { w: "keep",       c: "verb", r: "keep",        i: "/kiːp/" },
+  { w: "let",        c: "verb", r: "let",         i: "/lɛt/" },
+  { w: "begin",      c: "verb", r: "bih-GIN",     i: "/bɪˈgɪn/" },
+  { w: "help",       c: "verb", r: "help",        i: "/hɛlp/" },
+  { w: "talk",       c: "verb", r: "tawk",        i: "/tɔk/" },
+  { w: "turn",       c: "verb", r: "turn",        i: "/tɜrn/" },
+  { w: "start",      c: "verb", r: "start",       i: "/stɑrt/" },
+  { w: "show",       c: "verb", r: "shoh",        i: "/ʃoʊ/" },
+  { w: "hear",       c: "verb", r: "heer",        i: "/hɪər/" },
+  { w: "play",       c: "verb", r: "play",        i: "/pleɪ/" },
+  { w: "run",        c: "verb", r: "ruhn",        i: "/rʌn/" },
+  { w: "move",       c: "verb", r: "moov",        i: "/muːv/" },
+  { w: "live",       c: "verb", r: "liv",         i: "/lɪv/" },
+  { w: "believe",    c: "verb", r: "bih-LEEV",    i: "/bɪˈliːv/" },
+  { w: "man",        c: "noun", r: "man",         i: "/mæn/" },
+  { w: "thing",      c: "noun", r: "thing",       i: "/θɪŋ/" },
+  { w: "woman",      c: "noun", r: "WOO-muhn",    i: "/ˈwʊmən/" },
+  { w: "child",      c: "noun", r: "chyld",       i: "/tʃaɪld/" },
+  { w: "school",     c: "noun", r: "skool",       i: "/skuːl/" },
+  { w: "state",      c: "noun", r: "stayt",       i: "/steɪt/" },
+  { w: "family",     c: "noun", r: "FAM-uh-lee",  i: "/ˈfæmɪli/" },
+  { w: "student",    c: "noun", r: "STOO-duhnt",  i: "/ˈstuːdənt/" },
+  { w: "country",    c: "noun", r: "KUHN-tree",   i: "/ˈkʌntri/" },
+  { w: "system",     c: "noun", r: "SIS-tuhm",    i: "/ˈsɪstəm/" },
+  { w: "group",      c: "noun", r: "groop",       i: "/gruːp/" },
+  { w: "number",     c: "noun", r: "NUHM-ber",    i: "/ˈnʌmbər/" },
+  { w: "problem",    c: "noun", r: "PROB-luhm",   i: "/ˈprɒbləm/" },
+  { w: "fact",       c: "noun", r: "fakt",        i: "/fækt/" },
+  { w: "money",      c: "noun", r: "MUHN-ee",     i: "/ˈmʌni/" },
+  { w: "story",      c: "noun", r: "STOR-ee",     i: "/ˈstɔri/" },
+  { w: "friend",     c: "noun", r: "frend",       i: "/frɛnd/" },
+  { w: "house",      c: "noun", r: "hows",        i: "/haʊs/" },
+  { w: "eye",        c: "noun", r: "ay",          i: "/aɪ/" },
+  { w: "hand",       c: "noun", r: "hand",        i: "/hænd/" },
+  { w: "part",       c: "noun", r: "part",        i: "/pɑrt/" },
+  { w: "place",      c: "noun", r: "plays",       i: "/pleɪs/" },
+  { w: "case",       c: "noun", r: "kays",        i: "/keɪs/" },
+  { w: "point",      c: "noun", r: "poynt",       i: "/pɔɪnt/" },
+  { w: "week",       c: "noun", r: "week",        i: "/wiːk/" },
+  { w: "company",    c: "noun", r: "KUHM-puh-nee",i: "/ˈkʌmpəni/" },
+  { w: "write",      c: "verb", r: "ryt",         i: "/raɪt/" },
+  { w: "provide",    c: "verb", r: "pruh-VYD",    i: "/prəˈvaɪd/" },
+  { w: "sit",        c: "verb", r: "sit",         i: "/sɪt/" },
+  { w: "stand",      c: "verb", r: "stand",       i: "/stænd/" },
+  { w: "lose",       c: "verb", r: "looz",        i: "/luːz/" },
+  { w: "pay",        c: "verb", r: "pay",         i: "/peɪ/" },
+  { w: "meet",       c: "verb", r: "meet",        i: "/miːt/" },
+  { w: "include",    c: "verb", r: "in-KLOOD",    i: "/ɪnˈkluːd/" },
+  { w: "continue",   c: "verb", r: "kuhn-TIN-yoo",i: "/kənˈtɪnjuː/" },
+  { w: "set",        c: "verb", r: "set",         i: "/sɛt/" },
+  { w: "learn",      c: "verb", r: "lurn",        i: "/lɜrn/" },
+  { w: "change",     c: "verb", r: "chaynj",      i: "/tʃeɪndʒ/" },
+  { w: "lead",       c: "verb", r: "leed",        i: "/liːd/" },
+  { w: "watch",      c: "verb", r: "wahch",       i: "/wɒtʃ/" },
+  { w: "follow",     c: "verb", r: "FOL-oh",      i: "/ˈfɒloʊ/" },
+  { w: "stop",       c: "verb", r: "stop",        i: "/stɒp/" },
+  { w: "create",     c: "verb", r: "kree-AYT",    i: "/kriˈeɪt/" },
+  { w: "speak",      c: "verb", r: "speek",       i: "/spiːk/" },
+  { w: "read",       c: "verb", r: "reed",        i: "/riːd/" },
+  { w: "allow",      c: "verb", r: "uh-LOW",      i: "/əˈlaʊ/" },
+  { w: "add",        c: "verb", r: "ad",          i: "/æd/" },
+  { w: "open",       c: "verb", r: "OH-puhn",     i: "/ˈoʊpən/" },
+  { w: "walk",       c: "verb", r: "wawk",        i: "/wɔk/" },
+  { w: "understand", c: "verb", r: "uhn-der-STAND",i: "/ʌndərˈstænd/" },
+];
+
+/* ── State ────────────────────────────────────────────────────────── */
+let words        = [...ORIGINAL_WORDS];
+let currentIndex = 0;
+let mode         = 'flashcard';
+let stars        = 0;
+let blankIndices = [];
+let answered     = false;
+let activeCat    = 'all';
+
+/* ── Audio (correct/wrong tones) ──────────────────────────────────── */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, type, duration, vol = 0.25) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function playCorrect() {
+  playTone(523, 'sine', 0.12);
+  setTimeout(() => playTone(659, 'sine', 0.12), 100);
+  setTimeout(() => playTone(784, 'sine', 0.22), 200);
+}
+function playWrong() {
+  playTone(300, 'triangle', 0.18, 0.18);
+  setTimeout(() => playTone(250, 'triangle', 0.25, 0.15), 160);
+}
+
+/* ── Speech: native (Capacitor) or Web Speech API ────────────────── */
+const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+// We ship a single index.html with no bundler, so the @capacitor-community/text-to-speech
+// package's own `registerPlugin('TextToSpeech', ...)` call (which lives in its index.js) never
+// runs — meaning window.Capacitor.Plugins.TextToSpeech stays undefined. Register it manually
+// here so the JS proxy exists; the native side was already wired up by `npx cap sync`.
+let ttsNative = null;
+let _ttsRegisterErr = null;
+let _ttsBridgePath = 'none';
+if (isNative && window.Capacitor) {
+  // Path 1: registerPlugin (only available if @capacitor/core was bundled — usually not)
+  if (typeof window.Capacitor.registerPlugin === 'function') {
+    try {
+      ttsNative = window.Capacitor.registerPlugin('TextToSpeech');
+      _ttsBridgePath = 'registerPlugin';
+    } catch (e) {
+      _ttsRegisterErr = (e && e.message) || String(e);
+    }
+  }
+  // Path 2: nativePromise — always injected by Capacitor's Android shell.
+  // Build our own proxy that forwards each method name through the bridge.
+  if (!ttsNative && typeof window.Capacitor.nativePromise === 'function') {
+    const np = (method) => (opts) =>
+      window.Capacitor.nativePromise('TextToSpeech', method, opts || {});
+    ttsNative = {
+      speak: np('speak'),
+      stop: np('stop'),
+      getSupportedVoices: np('getSupportedVoices'),
+      getSupportedLanguages: np('getSupportedLanguages'),
+      isLanguageSupported: np('isLanguageSupported'),
+      openInstall: np('openInstall'),
+    };
+    _ttsBridgePath = 'nativePromise';
+  }
+}
+
+
+const VOICE_STORAGE_KEY = 'wordLearner.voice.v2';
+
+const FEMALE_HINTS = [
+  'female','woman','samantha','victoria','karen','susan','allison','ava',
+  'zira','hazel','tessa','moira','fiona','eva','serena','kate','amelie',
+  'kyoko','milena','paulina','nicky','vicki','veena','salli','joanna',
+  'kimberly','kendra','ivy','amy','emma','jenny','aria','libby','natasha',
+  'sonia','clara','liana','olivia','grace','maisie','heather','catherine',
+  'linda','michelle','sandy'
+];
+const MALE_HINTS = [
+  'male ','man ','daniel','alex','fred','david','mark','aaron','tom',
+  'oliver','rishi','james','arthur','matthew','guy','ryan','brian',
+  'george','william','john','paul','michael'
+];
+function isFemaleName(name) {
+  const n = (name || '').toLowerCase();
+  if (FEMALE_HINTS.some(h => n.includes(h))) return true;
+  if (MALE_HINTS.some(h => n.includes(h))) return false;
+  return null;
+}
+
+let availableVoices = []; // unified shape: { id, name, lang, female, _native? }
+let selectedVoiceId = null;
+
+async function loadVoices() {
+  // 1. Try the native Capacitor TTS plugin first — it gives better voices when
+  //    the device has language data downloaded. Retry a few times because
+  //    Android's TTS engine takes ~1s to become queryable after process start.
+  let nativeVoices = [];
+  let nativeError = null;
+  if (ttsNative) {
+    // Up to 10 seconds total — Android's TTS engine can take a long time to
+    // initialize on first launch, especially if voice data was just downloaded.
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        const result = await ttsNative.getSupportedVoices();
+        nativeVoices = (result && result.voices) || [];
+        if (nativeVoices.length) break;
+      } catch (e) {
+        nativeError = e && (e.message || String(e));
+      }
+      if (attempt < 9) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  // Stash for the diagnostic empty-state message.
+  loadVoices._diag = {
+    native: nativeVoices.length,
+    nativeErr: nativeError,
+    web: ('speechSynthesis' in window) ? speechSynthesis.getVoices().length : -1,
+  };
+
+  if (nativeVoices.length) {
+    const all = nativeVoices.map((v, idx) => ({
+      id: 'n:' + idx,
+      name: v.name || `Voice ${idx}`,
+      lang: v.lang || 'en-US',
+      female: isFemaleName(v.name),
+      _nativeIndex: idx,
+    }));
+    // Prefer English; if none, show all so the user has *something*.
+    const eng = all.filter(v => (v.lang || '').toLowerCase().startsWith('en'));
+    availableVoices = eng.length ? eng : all;
+  } else if ('speechSynthesis' in window) {
+    // 2. Fall back to the Web Speech API. Inside the Android WebView this often
+    //    returns voices even when the native plugin has no language pack.
+    const all = speechSynthesis.getVoices().map(v => ({
+      id: 'w:' + v.voiceURI,
+      name: v.name,
+      lang: v.lang,
+      female: isFemaleName(v.name),
+      _webVoice: v,
+    }));
+    const eng = all.filter(v => (v.lang || '').toLowerCase().startsWith('en'));
+    availableVoices = eng.length ? eng : all;
+  } else {
+    availableVoices = [];
+  }
+
+  // Female first, then alphabetical
+  availableVoices.sort((a, b) => {
+    if (a.female === true && b.female !== true) return -1;
+    if (b.female === true && a.female !== true) return 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = '';
+
+  if (!availableVoices.length) {
+    const d = loadVoices._diag || {};
+    if (isNative) {
+      // Always offer the system default — it works on devices where getVoices()
+      // is broken but speak() still functions (a known Android TTS quirk).
+      const defOpt = document.createElement('option');
+      defOpt.value = '_default_';
+      defOpt.textContent = '🔊 System default voice';
+      sel.appendChild(defOpt);
+      selectedVoiceId = '_default_';
+      defOpt.selected = true;
+
+      const installOpt = document.createElement('option');
+      installOpt.value = '_install_';
+      installOpt.textContent = '📲 Open TTS settings';
+      sel.appendChild(installOpt);
+
+      const retryOpt = document.createElement('option');
+      retryOpt.value = '_retry_';
+      retryOpt.textContent = '🔄 Refresh voice list';
+      sel.appendChild(retryOpt);
+    } else {
+      const opt = document.createElement('option');
+      opt.textContent = 'Loading voices…';
+      opt.disabled = true;
+      sel.appendChild(opt);
+    }
+    return;
+  }
+
+  const saved = localStorage.getItem(VOICE_STORAGE_KEY);
+  if (saved && availableVoices.some(v => v.id === saved)) {
+    selectedVoiceId = saved;
+  } else {
+    const fem = availableVoices.find(v => v.female === true);
+    selectedVoiceId = (fem || availableVoices[0]).id;
+  }
+
+  for (const v of availableVoices) {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    const tag = v.female === true ? '♀ ' : v.female === false ? '♂ ' : '';
+    opt.textContent = `${tag}${v.name} (${v.lang})`;
+    if (v.id === selectedVoiceId) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function onVoiceChange() {
+  const sel = document.getElementById('voiceSelect');
+  const val = sel.value;
+
+  // Special "no voices" actions.
+  if (val === '_install_') {
+    if (ttsNative && typeof ttsNative.openInstall === 'function') {
+      try { ttsNative.openInstall(); } catch (e) {}
+    }
+    sel.value = '_default_';
+    return;
+  }
+  if (val === '_retry_') {
+    sel.value = '_default_';
+    loadVoices();
+    return;
+  }
+  if (val === '_default_') {
+    selectedVoiceId = '_default_';
+    speakWord();
+    return;
+  }
+
+  selectedVoiceId = val;
+  try { localStorage.setItem(VOICE_STORAGE_KEY, selectedVoiceId); } catch(e) {}
+  speakWord();
+}
+
+// When the user returns from system settings (after installing voices),
+// re-poll automatically so the dropdown updates without another tap.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !availableVoices.length) {
+    loadVoices();
+  }
+});
+
+async function speakWord() {
+  const word = words[currentIndex];
+  if (!word) return;
+  const btn = mode === 'flashcard'
+    ? document.getElementById('speakBtn')
+    : document.getElementById('fitbSpeakBtn');
+  const voice = availableVoices.find(v => v.id === selectedVoiceId);
+  const useNativeDefault = selectedVoiceId === '_default_';
+
+  // Brief status line under the speaker — only appears on errors.
+  const status = mode === 'flashcard'
+    ? document.getElementById('flashStatus')
+    : document.getElementById('hint');
+  const setStatus = (msg, color) => {
+    if (!status) return;
+    status.textContent = msg || '';
+    status.style.color = color || '#6b7280';
+  };
+
+  if (btn) btn.classList.add('speaking');
+
+  const showSpeakErr = (msg) => {
+    setStatus('❌ ' + (msg || 'unknown error'), '#dc2626');
+    if (!btn) return;
+    btn.title = 'Speak failed: ' + (msg || 'unknown');
+    btn.style.background = '#fee2e2';
+    setTimeout(() => { btn.style.background = ''; btn.title = 'Hear it'; }, 4000);
+  };
+
+  try {
+    if (voice && voice._webVoice && 'speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(word.w);
+      utter.voice = voice._webVoice;
+      utter.lang = voice.lang || 'en-US';
+      utter.rate = 0.85;
+      utter.pitch = 1.05;
+      utter.onend = () => { if (btn) btn.classList.remove('speaking'); };
+      utter.onerror = () => { if (btn) btn.classList.remove('speaking'); };
+      speechSynthesis.speak(utter);
+    } else if (ttsNative && (voice || useNativeDefault)) {
+      try { await ttsNative.stop(); } catch(e) {}
+      const params = {
+        text: word.w,
+        lang: (voice && voice.lang) || 'en-US',
+        rate: 0.9,
+        pitch: 1.05,
+        volume: 1.0,
+        category: 'playback',  // try 'playback' (was 'ambient'); some Android TTS engines mute on ambient
+      };
+      if (voice && voice._nativeIndex != null) {
+        params.voice = voice._nativeIndex;
+      }
+      try {
+        await ttsNative.speak(params);
+        setStatus('', '');  // clear any prior error
+      } catch (e) {
+        showSpeakErr(e && (e.message || String(e)));
+      }
+      if (btn) btn.classList.remove('speaking');
+    } else if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(word.w);
+      utter.lang = 'en-US';
+      utter.rate = 0.85;
+      utter.pitch = 1.05;
+      utter.onend = () => { if (btn) btn.classList.remove('speaking'); };
+      utter.onerror = () => { if (btn) btn.classList.remove('speaking'); };
+      speechSynthesis.speak(utter);
+    } else {
+      if (btn) btn.classList.remove('speaking');
+    }
+  } catch (e) {
+    showSpeakErr(e && (e.message || String(e)));
+    if (btn) btn.classList.remove('speaking');
+  }
+}
+
+// Always run once on init.
+setTimeout(loadVoices, 0);
+
+// Re-poll when the user taps the voice dropdown — picks up voices that
+// finished initializing or downloading after the page first loaded.
+document.getElementById('voiceSelect').addEventListener('mousedown', () => {
+  if (!availableVoices.length) loadVoices();
+});
+document.getElementById('voiceSelect').addEventListener('focus', () => {
+  if (!availableVoices.length) loadVoices();
+});
+
+// Always subscribe to voiceschanged — it fires when Web Speech voices arrive
+// asynchronously, which we need both in pure-web mode AND in native mode when
+// we fall back to Web Speech because the plugin had no voices yet.
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// One last safety net: re-poll a couple of times in the first 5 seconds in case
+// neither the plugin nor voiceschanged fires on this device.
+let _retryCount = 0;
+const _retryTimer = setInterval(() => {
+  if (availableVoices.length || _retryCount >= 5) {
+    clearInterval(_retryTimer);
+    return;
+  }
+  _retryCount++;
+  loadVoices();
+}, 1000);
+
+/* ── Bubbles ──────────────────────────────────────────────────────── */
+(function createBubbles() {
+  const container = document.getElementById('bubbleContainer');
+  const colors = ['#ffd6e7','#c9e8ff','#d4f1c0','#e8d5ff','#ffecb3','#fecdd3','#bfdbfe'];
+  for (let i = 0; i < 22; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 20 + Math.random() * 60;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${8 + Math.random()*12}s;
+      animation-delay:${Math.random()*12}s;
+    `;
+    container.appendChild(b);
+  }
+})();
+
+/* ── Filter pills ─────────────────────────────────────────────────── */
+function buildFilterRow() {
+  const row = document.getElementById('filterRow');
+  row.innerHTML = '';
+
+  const counts = { all: ORIGINAL_WORDS.length };
+  for (const key of Object.keys(CATEGORIES)) counts[key] = 0;
+  for (const w of ORIGINAL_WORDS) counts[w.c] = (counts[w.c] || 0) + 1;
+
+  const makePill = (key, label, color) => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (activeCat === key ? ' active' : '');
+    btn.dataset.cat = key;
+    btn.textContent = `${label} (${counts[key]})`;
+    if (activeCat === key) {
+      btn.style.background = color;
+      btn.style.borderColor = color;
+    } else {
+      btn.style.background = '';
+      btn.style.borderColor = '';
+    }
+    btn.addEventListener('click', () => setCategory(key));
+    return btn;
+  };
+
+  row.appendChild(makePill('all', 'All', '#7c3aed'));
+  for (const [key, info] of Object.entries(CATEGORIES)) {
+    row.appendChild(makePill(key, info.label, info.color));
+  }
+}
+
+function setCategory(cat) {
+  activeCat = cat;
+  words = (cat === 'all')
+    ? [...ORIGINAL_WORDS]
+    : ORIGINAL_WORDS.filter(w => w.c === cat);
+  currentIndex = 0;
+  buildFilterRow();
+  render();
+}
+
+/* ── UI helpers ───────────────────────────────────────────────────── */
+function updateProgress() {
+  const total = words.length;
+  if (total === 0) {
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressLabel').textContent = 'No words in this category';
+    return;
+  }
+  const n = currentIndex + 1;
+  const pct = Math.max(1, (n / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  const label = `Word ${n} of ${total}`;
+  document.getElementById('progressLabel').textContent = label;
+  document.getElementById('wordNumber').textContent    = label;
+  document.getElementById('fitbWordNumber').textContent = label;
+}
+
+function setMascot(state) {
+  const m = document.getElementById('mascot');
+  m.className = 'mascot';
+  void m.offsetWidth;
+  if (state) m.classList.add(state);
+}
+
+function addStarBurst(x, y) {
+  const emojis = ['⭐','🌟','✨','🎉','🎊'];
+  for (let i = 0; i < 5; i++) {
+    const el = document.createElement('div');
+    el.className = 'star-burst';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.left = (x - 20 + (Math.random()-0.5)*80) + 'px';
+    el.style.top  = (y - 20 + (Math.random()-0.5)*40) + 'px';
+    el.style.animationDelay = (Math.random()*0.3) + 's';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+function applyCardBorder(catKey) {
+  const card = document.getElementById('card');
+  const color = CATEGORIES[catKey] ? CATEGORIES[catKey].color : '#e9d5ff';
+  card.style.borderColor = color + '88';
+}
+
+function setBadge(el, catKey) {
+  const info = CATEGORIES[catKey];
+  if (!info) return;
+  el.textContent = info.label;
+  el.style.background = info.color;
+}
+
+/* ── Flashcard mode ───────────────────────────────────────────────── */
+function renderFlashcard() {
+  const word = words[currentIndex];
+  if (!word) return;
+  document.getElementById('wordDisplay').textContent = word.w;
+  document.getElementById('pronRespell').textContent = word.r;
+  document.getElementById('pronIpa').textContent = word.i;
+  setBadge(document.getElementById('catBadge'), word.c);
+  applyCardBorder(word.c);
+  updateProgress();
+}
+
+/* ── Fill-in-the-blank mode ───────────────────────────────────────── */
+function renderFitb() {
+  const word = words[currentIndex];
+  if (!word) return;
+  answered = false;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('hint').textContent = 'Type the missing letters, then tap Check!';
+  document.getElementById('checkBtn').disabled = false;
+  document.getElementById('checkBtn').style.opacity = '1';
+
+  setBadge(document.getElementById('fitbCatBadge'), word.c);
+  applyCardBorder(word.c);
+
+  document.getElementById('fitbPronRespell').textContent = word.r;
+  document.getElementById('fitbPronIpa').textContent = word.i;
+  document.getElementById('fitbPron').style.visibility = 'hidden';
+
+  let numBlanks;
+  if (word.w.length <= 3)      numBlanks = 1;
+  else if (word.w.length <= 6) numBlanks = 2;
+  else                          numBlanks = 3;
+
+  const indices = [];
+  while (indices.length < Math.min(numBlanks, word.w.length)) {
+    const idx = Math.floor(Math.random() * word.w.length);
+    if (!indices.includes(idx)) indices.push(idx);
+  }
+  blankIndices = indices.sort((a,b) => a-b);
+
+  const container = document.getElementById('fitbDisplay');
+  container.innerHTML = '';
+
+  for (let i = 0; i < word.w.length; i++) {
+    if (blankIndices.includes(i)) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.maxLength = 1;
+      inp.className = 'fitb-input';
+      inp.dataset.index = i;
+      inp.setAttribute('autocomplete','off');
+      inp.setAttribute('autocorrect','off');
+      inp.setAttribute('autocapitalize','none');
+      inp.setAttribute('spellcheck','false');
+      inp.addEventListener('input', function() {
+        this.value = this.value.slice(-1).toLowerCase();
+        const inputs = [...container.querySelectorAll('.fitb-input')];
+        const myPos = inputs.indexOf(this);
+        if (this.value && myPos < inputs.length - 1) {
+          inputs[myPos + 1].focus();
+        }
+      });
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkAnswer();
+        if (e.key === 'Backspace' && !this.value) {
+          const inputs = [...container.querySelectorAll('.fitb-input')];
+          const myPos = inputs.indexOf(this);
+          if (myPos > 0) inputs[myPos - 1].focus();
+        }
+      });
+      container.appendChild(inp);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'fitb-letter';
+      span.textContent = word.w[i];
+      container.appendChild(span);
+    }
+  }
+
+  const first = container.querySelector('.fitb-input');
+  if (first) setTimeout(() => first.focus(), 50);
+
+  updateProgress();
+}
+
+function checkAnswer() {
+  if (answered) return;
+  const word = words[currentIndex];
+  if (!word) return;
+  const container = document.getElementById('fitbDisplay');
+  const inputs = [...container.querySelectorAll('.fitb-input')];
+  const feedback = document.getElementById('feedback');
+
+  let allCorrect = true;
+  inputs.forEach(inp => {
+    const expected = word.w[parseInt(inp.dataset.index)].toLowerCase();
+    const given    = (inp.value || '').toLowerCase();
+    if (given === expected) {
+      inp.classList.add('correct');
+    } else {
+      inp.classList.remove('correct');
+      inp.classList.add('wrong');
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    answered = true;
+    feedback.textContent = '✅ Awesome!';
+    feedback.className = 'feedback correct';
+    document.getElementById('hint').textContent = '🎉 Moving to next word...';
+    document.getElementById('checkBtn').disabled = true;
+    document.getElementById('checkBtn').style.opacity = '0.5';
+    document.getElementById('fitbPron').style.visibility = 'visible';
+    playCorrect();
+    setMascot('happy');
+    stars++;
+    document.getElementById('starCount').textContent = stars;
+    const card = document.getElementById('card');
+    const rect = card.getBoundingClientRect();
+    addStarBurst(rect.left + rect.width/2, rect.top + rect.height/2);
+    setTimeout(() => speakWord(), 200);
+    setTimeout(() => nextWord(), 1800);
+  } else {
+    feedback.textContent = '❌ Try again!';
+    feedback.className = 'feedback wrong';
+    document.getElementById('hint').textContent = '💪 You can do it! Check the blanks.';
+    playWrong();
+    setMascot('sad');
+    inputs.forEach(inp => {
+      if (inp.classList.contains('wrong')) {
+        inp.value = '';
+        inp.classList.remove('wrong');
+      }
+    });
+    const firstWrong = container.querySelector('.fitb-input');
+    if (firstWrong) firstWrong.focus();
+  }
+}
+
+/* ── Navigation ───────────────────────────────────────────────────── */
+function nextWord() {
+  if (words.length === 0) return;
+  currentIndex = (currentIndex + 1) % words.length;
+  render();
+}
+function prevWord() {
+  if (words.length === 0) return;
+  currentIndex = (currentIndex - 1 + words.length) % words.length;
+  render();
+}
+
+function render() {
+  if (words.length === 0) {
+    document.getElementById('flashcardView').style.display = 'none';
+    document.getElementById('fitbView').style.display = 'none';
+    let empty = document.getElementById('emptyMsg');
+    if (!empty) {
+      empty = document.createElement('div');
+      empty.id = 'emptyMsg';
+      empty.className = 'empty';
+      empty.textContent = 'No words in this category — pick another!';
+      document.getElementById('card').appendChild(empty);
+    }
+    updateProgress();
+    return;
+  }
+  const empty = document.getElementById('emptyMsg');
+  if (empty) empty.remove();
+
+  if (mode === 'flashcard') {
+    document.getElementById('flashcardView').style.display = 'flex';
+    document.getElementById('fitbView').style.display = 'none';
+    renderFlashcard();
+  } else {
+    document.getElementById('flashcardView').style.display = 'none';
+    document.getElementById('fitbView').style.display = 'flex';
+    renderFitb();
+  }
+}
+
+function toggleMode() {
+  mode = mode === 'flashcard' ? 'fitb' : 'flashcard';
+  const modeBtn = document.getElementById('modeBtn');
+  if (mode === 'fitb') {
+    document.getElementById('navRow').style.display = 'none';
+    document.getElementById('fitbNav').style.display = 'flex';
+    modeBtn.textContent = 'Switch to Flashcard Mode 🃏';
+    modeBtn.className = 'btn btn-blue';
+  } else {
+    document.getElementById('navRow').style.display = 'flex';
+    document.getElementById('fitbNav').style.display = 'none';
+    modeBtn.textContent = 'Switch to Fill-in-the-Blank 🖊️';
+    modeBtn.className = 'btn btn-purple';
+  }
+  render();
+}
+
+function shuffleWords() {
+  for (let i = words.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [words[i], words[j]] = [words[j], words[i]];
+  }
+  currentIndex = 0;
+  render();
+}
+
+/* ── Init ─────────────────────────────────────────────────────────── */
+buildFilterRow();
+render();
+</script>
+</body>
+</html>

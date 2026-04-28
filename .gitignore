@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+*.log
+
+# Capacitor / Gradle caches
+.gradle/
+.cap/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Keystores — NEVER COMMIT (lose this and you lose the ability to update the app)
+*.keystore
+*.jks
+keystore.properties
+
+# Built app artifacts
+*.apk
+*.aab
+
+# Local Capacitor copy of web assets (synced from www/)
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+
+# Cordova plugins copy
+android/capacitor-cordova-android-plugins/
