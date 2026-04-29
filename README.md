@@ -1,6 +1,6 @@
 # Word Learner
 
-A colorful flashcard app that teaches the **200 most common English words** to early readers and ESL learners. Built with Capacitor — single HTML/CSS/JS source, packaged as a native Android app.
+A colorful flashcard app that teaches the **200 most common English words** to early readers and ESL learners. Built with Capacitor — a single HTML/CSS/JS source builds to native **Android** *and* **iOS** apps.
 
 ## Features
 

@@ -54,8 +54,8 @@ Go to https://developer.apple.com/account → sign in → confirm your membershi
 ```bash
 # Clone the repo (you already pushed it from Windows)
 cd ~
-git clone https://github.com/Traaa1234/word-learner-android.git
-cd word-learner-android
+git clone https://github.com/Traaa1234/word-learner.git
+cd word-learner
 
 # Install dependencies — same command as Windows, just runs on Mac
 npm install
