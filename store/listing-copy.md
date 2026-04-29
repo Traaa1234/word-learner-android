@@ -66,7 +66,7 @@ Best for ages 5 to 10, but anyone learning English (including adult ESL learners
 
 📱 Designed for both phones and tablets. Looks great on any screen.
 
-Made with love for kids who are just learning to read. Bug reports, ideas, and "thank yous" are all welcome at lw_jen@yahoo.com.
+Made with love for kids who are just learning to read. Bug reports, ideas, and "thank yous" are all welcome at learnerOne250@gmail.com.
 
 Happy learning! 🌈
 ```
@@ -93,7 +93,7 @@ Happy learning! 🌈
 | **Application type** | App |
 | **Category** | Education |
 | **Tags** | "Education", "Word games", "Kids" (Play Console will let you pick 5) |
-| **Email** | lw_jen@yahoo.com |
+| **Email** | learnerOne250@gmail.com |
 | **Website** | (optional — your privacy-policy URL is fine) |
 | **Phone** | (optional, can be left blank for individual accounts) |
 | **Privacy policy URL** | The hosted URL of `privacy-policy.html` (see below) |
@@ -169,7 +169,7 @@ Reuse the **Full description** block from the top of this file. Apple accepts th
 | **Tier** | 0 |
 | **Availability** | All territories |
 | **Privacy policy URL** | Same hosted URL as Play Console |
-| **Support URL** | Same — privacy policy URL works, or `mailto:lw_jen@yahoo.com` |
+| **Support URL** | Same — privacy policy URL works, or `mailto:learnerOne250@gmail.com` |
 | **Marketing URL** | optional |
 | **Copyright** | `2026 elinw` |
 | **App Review Information → Sign-in required** | No |

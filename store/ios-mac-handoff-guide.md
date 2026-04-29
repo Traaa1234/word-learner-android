@@ -166,7 +166,7 @@ After you're happy with TestFlight feedback:
    - **Promotional text** (170 chars, can update without re-submission): elevator pitch
    - **Description** (4000 chars): paste from `store/listing-copy.md` § "Full description"
    - **Keywords** (100 chars, comma-separated): `phonics,sight words,reading,kids,esl,flashcards,early reader,kindergarten,preschool,letters`
-   - **Support URL**: your privacy policy GitHub Pages URL is fine, or a `mailto:lw_jen@yahoo.com` link
+   - **Support URL**: your privacy policy GitHub Pages URL is fine, or a `mailto:learnerOne250@gmail.com` link
    - **Marketing URL**: optional
 3. **App Store Icon** (1024×1024): upload `store/icon-only.png` (NOT the 512 version — App Store wants 1024 for iOS)
 4. **Screenshots**: required for at least one device size. Apple wants iPhone 6.7" screenshots (1290 × 2796) — bigger than what we generated for Play. Two paths:

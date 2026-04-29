@@ -59,4 +59,4 @@ If this policy is ever updated, the "Effective date" above will change and the n
 
 ## Contact
 
-Questions or concerns? Email: **lw_jen@yahoo.com**
+Questions or concerns? Email: **learnerOne250@gmail.com**
