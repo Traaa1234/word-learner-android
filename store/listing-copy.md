@@ -105,6 +105,82 @@ Happy learning! 🌈
 
 ---
 
+## App Store (iOS) — additional copy fields
+
+Apple's listing has a few fields Google Play doesn't. Paste these into **App Store Connect → your app → App Store tab → iOS App 1.0**.
+
+### Subtitle *(max 30 chars — appears under the app name in search results)*
+
+```
+Top 200 sight-words for kids
+```
+
+*(28 / 30 chars)*
+
+#### Alternates
+
+- `Phonics flashcards for kids` (27)
+- `200 sight-words. Read more.` (27)
+- `Read more: 200 sight-words` (26)
+
+### Promotional text *(max 170 chars — can be updated any time without re-review)*
+
+```
+Help your child master the 200 most-used English words with bright flashcards, real voice pronunciation, and fill-in-the-blank fun. Free, no ads, no tracking.
+```
+
+*(161 / 170 chars)*
+
+### Keywords *(max 100 chars total, comma-separated, no leading/trailing spaces)*
+
+```
+phonics,sight words,flashcards,reading,kids,esl,spelling,preschool,kindergarten,literacy,early reader
+```
+
+*(99 / 100 chars)*
+
+> Tip: Apple separates keywords by comma. Spaces inside a keyword (e.g. `sight words`) keep it as a single phrase. Don't repeat keywords already in the App name or Subtitle — Apple indexes those too.
+
+### Description *(max 4000 chars)*
+
+Reuse the **Full description** block from the top of this file. Apple accepts the same content; the only nit is to avoid mentioning "Google Play" or "Play Store" — which we already don't.
+
+---
+
+## App Store visual assets to upload
+
+| Asset | File | Specs |
+|---|---|---|
+| **App icon** | `assets/icon-only.png` | **1024×1024** (Apple wants the bigger one, NOT the 512 we used for Play) |
+| **6.7" iPhone screenshots** (2–10 required) | all 4 files in `screenshots-ios/` | 1290×2796 PNG |
+| **6.5" iPhone screenshots** | optional — Apple auto-generates from 6.7" | — |
+| **iPad screenshots** | optional but bumps the listing's visibility on iPad search | leave blank to start |
+
+---
+
+## Other App Store Connect fields (quick reference)
+
+| Field | Suggested value |
+|---|---|
+| **Primary category** | Education |
+| **Secondary category** | Education (or skip) |
+| **Age rating** | 4+ (complete questionnaire — answer "no" to all sensitive items) |
+| **Pricing** | Free |
+| **Tier** | 0 |
+| **Availability** | All territories |
+| **Privacy policy URL** | Same hosted URL as Play Console |
+| **Support URL** | Same — privacy policy URL works, or `mailto:lw_jen@yahoo.com` |
+| **Marketing URL** | optional |
+| **Copyright** | `2026 elinw` |
+| **App Review Information → Sign-in required** | No |
+| **App Review Information → Demo account** | leave blank |
+| **App Review Information → Notes** | "Children's flashcard app teaching the 200 most common English words. No login. No data collection or transmission. All speech happens on-device using Apple's AVSpeechSynthesizer (via Capacitor TTS plugin)." |
+| **App Privacy → Data collected** | None |
+| **App Privacy → Data linked to user** | None |
+| **App Privacy → Tracking** | No |
+
+---
+
 ## Hosting the privacy policy on GitHub Pages (free, 5 min)
 
 Play Store **requires** a public URL for your privacy policy. The simplest free path:
